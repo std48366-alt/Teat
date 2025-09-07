@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FitQuest - แอพออกกำลังกาย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        * { -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Kanit', sans-serif; 
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .card-shadow { box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .pulse-animation { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .glow-button { animation: glow 2s ease-in-out infinite alternate; }
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(34, 197, 94, 0.5), 0 0 30px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.2); }
+            to { box-shadow: 0 0 30px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.5), 0 0 50px rgba(34, 197, 94, 0.3); }
+        }
+        .workout-card { transition: all 0.2s ease; -webkit-transform: translateZ(0); }
+        .workout-card:active { transform: scale(0.95); }
+        .safe-area-top { padding-top: env(safe-area-inset-top); }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .mobile-container { max-width: 428px; margin: 0 auto; }
+        .nav-item { transition: all 0.2s ease; }
+        .nav-item:active { transform: scale(0.9); }
+        .floating-action { position: fixed; bottom: 90px; right: 20px; z-index: 40; box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.17.0",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-black mobile-container">
+    <div class="bg-gradient-to-r from-green-600 to-green-800 text-white px-4 pb-4 sticky top-0 z-50 safe-area-top">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg"><span class="text-2xl">💪</span></div>
+                <div>
+                    <h1 class="text-xl font-bold">FitQuest</h1>
+                    <p class="text-sm opacity-90">สวัสดี, นักกีฬา!</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center nav-item"><span class="text-lg">🔔</span></button>
+                <button class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center nav-item"><span class="text-lg">⚙️</span></button>
+            </div>
+        </div>
+    </div>
+
+    <main class="px-4 space-y-5 pb-24">
+        <div class="bg-gray-800 rounded-3xl p-5 card-shadow border border-green-500">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">🎯 เป้าหมายวันนี้</h2>
+                <div class="bg-green-100 px-3 py-1 rounded-full"><span class="text-sm font-semibold text-green-700">75%</span></div>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-2xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-700 font-medium">🔥 เผาผลาญแคลอรี่</span>
+                        <span class="text-sm font-bold text-green-700">450/600 แคล</span>
+                    </div>
+                    <div class="w-full bg-white rounded-full h-3 shadow-inner"><div class="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full shadow-sm" style="width: 75%"></div></div>
+                </div>
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-2xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-700 font-medium">⏱️ เวลาออกกำลังกาย</span>
+                        <span class="text-sm font-bold text-blue-700">30/45 นาที</span>
+                    </div>
+                    <div class="w-full bg-white rounded-full h-3 shadow-inner"><div class="bg-gradient-to-r from-blue-400 to-blue-600 h-3 rounded-full shadow-sm" style="width: 67%"></div></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="streak-card" class="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 rounded-3xl p-5 text-white card-shadow border-2 border-orange-400">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div id="streak-icon" class="text-4xl">🔥</div>
+                    <div>
+                        <h2 class="text-lg font-bold">Fire Streak</h2>
+                        <p class="text-sm opacity-90">Keep the fire going!</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold" id="streak-count">0</div>
+                    <div class="text-xs opacity-80">days in a row</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="startRandomWorkout()" class="bg-gradient-to-br from-orange-400 to-orange-600 text-white p-5 rounded-3xl card-shadow workout-card">
+                <div class="text-3xl mb-2">🎲</div>
+                <div class="text-sm font-bold">สุ่มการออกกำลังกาย</div>
+                <div class="text-xs opacity-80 mt-1">ไม่รู้จะทำอะไร?</div>
+            </button>
+            <button onclick="openAICoach()" class="bg-gradient-to-br from-blue-400 to-blue-600 text-white p-5 rounded-3xl card-shadow workout-card">
+                <div class="text-3xl mb-2">🤖</div>
+                <div class="text-sm font-bold">AI โค้ช</div>
+                <div class="text-xs opacity-80 mt-1">คำแนะนำส่วนตัว</div>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white">💪 หมวดหมู่การออกกำลังกาย</h2>
+                <button onclick="showWorkouts()" class="text-sm text-green-400 font-medium">ดูทั้งหมด</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div onclick="openWorkoutCategory('cardio')" class="bg-gradient-to-br from-red-400 to-red-600 text-white p-5 rounded-3xl card-shadow workout-card cursor-pointer">
+                    <div class="text-3xl mb-2">❤️</div>
+                    <div class="text-sm font-bold">คาร์ดิโอ</div>
+                    <div class="text-xs opacity-80">เผาผลาญไขมัน</div>
+                </div>
+                <div onclick="openWorkoutCategory('strength')" class="bg-gradient-to-br from-green-400 to-green-600 text-white p-5 rounded-3xl card-shadow workout-card cursor-pointer">
+                    <div class="text-3xl mb-2">🏋️</div>
+                    <div class="text-sm font-bold">เสริมกล้ามเนื้อ</div>
+                    <div class="text-xs opacity-80">สร้างความแข็งแรง</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <button onclick="showAICamera()" class="floating-action w-14 h-14 bg-gradient-to-r from-green-500 to-green-700 rounded-full flex items-center justify-center text-white nav-item shadow-lg shadow-green-500/50">
+        <span class="text-2xl">📷</span>
+    </button>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 safe-area-bottom mobile-container">
+        <div class="flex justify-around px-2 py-1">
+            <button onclick="showHome()" class="flex flex-col items-center py-3 px-4 text-green-400 nav-item">
+                <span class="text-2xl mb-1">🏠</span><span class="text-xs font-medium">หน้าหลัก</span>
+            </button>
+            <button onclick="showWorkouts()" class="flex flex-col items-center py-3 px-4 text-gray-400 nav-item">
+                <span class="text-2xl mb-1">💪</span><span class="text-xs">ออกกำลังกาย</span>
+            </button>
+            <button onclick="showProgress()" class="flex flex-col items-center py-3 px-4 text-gray-400 nav-item">
+                <span class="text-2xl mb-1">📊</span><span class="text-xs">ความคืบหน้า</span>
+            </button>
+            <button onclick="showProfile()" class="flex flex-col items-center py-3 px-4 text-gray-400 nav-item">
+                <span class="text-2xl mb-1">👤</span><span class="text-xs">โปรไฟล์</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="workoutModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden">
+        <div class="flex items-end justify-center min-h-screen">
+            <div class="bg-gray-900 rounded-t-3xl p-6 w-full slide-up border-t-2 border-green-500">
+                <div class="w-12 h-1 bg-green-400 rounded-full mx-auto mb-4"></div>
+                <div class="flex items-center justify-between mb-6">
+                    <h3 id="workoutTitle" class="text-xl font-bold text-white">การออกกำลังกาย</h3>
+                    <button onclick="closeWorkoutModal()" class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center nav-item border border-green-500"><span class="text-green-400">✕</span></button>
+                </div>
+                <div id="workoutContent" class="space-y-4 mb-6"></div>
+                <div class="space-y-3">
+                    <button id="startWorkoutBtn" onclick="window.startWorkout()" class="w-full bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white py-5 rounded-3xl font-bold text-xl nav-item shadow-2xl shadow-green-500/50 border-2 border-green-300 glow-button hidden">🚀 เริ่มออกกำลังกาย</button>
+                    <button onclick="closeWorkoutModal()" class="w-full bg-gray-700 text-gray-300 py-3 rounded-2xl font-semibold nav-item border border-gray-600">ยกเลิก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="streak-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-3xl p-8 text-white text-center max-w-sm w-full border-4 border-orange-400 slide-up">
+            <div class="text-8xl mb-4 animate-bounce">🔥</div>
+            <h3 class="text-3xl font-bold mb-2">Streak Extended!</h3>
+            <p id="streak-modal-text" class="text-xl mb-6">You are on a 3 day streak!</p>
+            <button onclick="document.getElementById('streak-modal').classList.add('hidden')" class="bg-gradient-to-r from-orange-500 to-red-500 px-8 py-3 rounded-2xl font-bold text-lg nav-item">
+                Keep it up!
+            </button>
+        </div>
+    </div>
+
+    <div id="activeWorkoutModal" class="fixed inset-0 bg-black z-50 hidden">
+        <div class="flex flex-col h-full text-white safe-area-top safe-area-bottom">
+            <div class="flex items-center justify-between p-4">
+                <h3 id="activeWorkoutTitle" class="text-xl font-bold">Push-ups</h3>
+                <button id="pause-resume-btn" onclick="window.pauseWorkout()" class="bg-yellow-500 px-4 py-2 rounded-2xl font-semibold nav-item">⏸️ หยุดชั่วคราว</button>
+            </div>
+            <div class="flex-1 flex flex-col items-center justify-center p-6">
+                <div class="text-7xl font-bold mb-6 text-center" id="workoutTimer">00:30</div>
+                <div id="ai-camera-container" class="w-full max-w-sm h-64 bg-gray-900 rounded-3xl mb-4 relative overflow-hidden shadow-2xl border-4 border-gray-700 transition-colors duration-500 mx-auto">
+                    <video id="ai-video-feed" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+                    <canvas id="ai-canvas-overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                    <div id="ai-camera-placeholder" class="absolute inset-0 flex flex-col justify-center items-center bg-black bg-opacity-80 transition-opacity duration-300">
+                        <div class="text-center p-4">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.55a2 2 0 01.45 2.12A12 12 0 0112 21a12.001 12.001 0 01-8-3.88 2 2 0 01.45-2.12L9 10m0 0a3 3 0 116 0 3 3 0 01-6 0z" /></svg>
+                            <h3 id="ai-camera-status" class="text-lg font-bold mb-1">กำลังเปิดกล้อง...</h3>
+                            <p id="ai-camera-error" class="text-red-400 text-sm max-w-xs hidden"></p>
+                        </div>
+                    </div>
+                </div>
+                <div id="ai-feedback-display" class="w-full max-w-sm mx-auto mb-4 min-h-[80px]"></div>
+                <div class="flex flex-col space-y-4 w-full max-w-sm">
+                    <div class="flex space-x-3">
+                        <button onclick="stopWorkout()" class="flex-1 bg-red-500 py-4 rounded-2xl font-bold text-lg nav-item">🛑 หยุด</button>
+                        <button onclick="nextExercise()" class="flex-1 bg-blue-500 py-4 rounded-2xl font-bold text-lg nav-item">⏭️ ท่าถัดไป</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="aiCoachModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden"></div>
+    <div id="page-container"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
