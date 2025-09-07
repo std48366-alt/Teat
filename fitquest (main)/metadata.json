@@ -1,7 +1,0 @@
-{
-  "name": "FitQuest",
-  "description": "A comprehensive fitness app with an AI coach to analyze your exercise form in real-time, featuring workout plans, progress tracking, and gamified streaks.",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}
